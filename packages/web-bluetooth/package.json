@@ -1,0 +1,32 @@
+{
+  "name": "@autonomy-local/web-bluetooth",
+  "version": "0.0.1",
+  "description": "web bluetooth api wrapper",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://npm.pkg.github.com/"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/autonomy-local/autonomy-devices.git"
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build": "tsc --build",
+    "clean": "tsc --build --clean",
+    "run": "tsx ...",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "autonomy-local",
+  "license": "MIT",
+  "devDependencies": {
+    "tsx": "^3.12.7",
+    "typescript": "^5.0.4"
+  },
+  "declaration": true
+}

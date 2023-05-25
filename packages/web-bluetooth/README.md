@@ -2,6 +2,8 @@
 
 ## WIP
 
+- we use [tsx](https://github.com/esbuild-kit/tsx) alternative to ts-node.
+
 ## References
 
 - [Web Bluetooth API](https://webbluetoothcg.github.io/web-bluetooth/)
