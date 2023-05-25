@@ -15,6 +15,7 @@ jobs:
         working-directory: ./sample/app
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
+          entryPoint: ./sample
           repoToken: "${{ secrets.GITHUB_TOKEN }}"
           firebaseServiceAccount: "${{ secrets.FIREBASE_SERVICE_ACCOUNT_AUTONOMY_SAMPLE_APP }}"
           channelId: live
