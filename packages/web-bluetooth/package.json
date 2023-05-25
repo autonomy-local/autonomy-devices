@@ -24,6 +24,9 @@
   },
   "author": "autonomy-local",
   "license": "MIT",
+  "dependencies": {
+    "typescript": "^5.0.4"
+  },
   "devDependencies": {
     "tsx": "^3.12.7",
     "typescript": "^5.0.4"
