@@ -1,5 +1,19 @@
 // use type > https://www.npmjs.com/package/@types/w3c-web-usb
 // ISO7816-4/8/9
+//@ts-igonore
+export async function webHoge() {
+  //@ts-ignore
+  const device = await navigator?.usb.requestDevice(DEVICE_OPTIONS);
+  console.log(device);
+  if (device.productId === 3528) {
+    // RC-S300S
+    await device.open();
+  }
+  if (device.productId === 1731) {
+    // RC-S380p
+    await device.open();
+  }
+}
 
 const DEVICE_FILTER = {};
 const DEVICE_OPTIONS = {

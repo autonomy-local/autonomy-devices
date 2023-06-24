@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { webusb } from './usb/usb.service';
+import { webHoge, webusb } from './usb/usb.service';
 import { webnfc } from './nfc/nfc.service';
 import { webusbNew } from './usb/usb.service';
 
@@ -15,6 +15,10 @@ export class DevicesPage implements OnInit {
 
   callMethod() {
     webusbNew();
+  }
+
+  callMethod1() {
+    webHoge();
   }
 
   callMethod2() {
