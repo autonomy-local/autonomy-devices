@@ -8,10 +8,7 @@ import { webnfc } from './nfc/nfc.service';
   styleUrls: ['./devices.page.scss'],
 })
 export class DevicesPage implements OnInit {
-  constructor() {
-    webusb();
-    webnfc();
-  }
+  constructor() {}
 
   ngOnInit() {}
 
