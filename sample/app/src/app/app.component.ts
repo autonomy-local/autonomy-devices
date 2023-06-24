@@ -8,6 +8,5 @@ export class AppComponent {
   public appPages = [
     { title: 'Devices', url: '/devices', icon: 'hardware-chip' },
   ];
-  public labels = ['Family', 'Friends', 'Notes', 'Work', 'Travel', 'Reminders'];
   constructor() {}
 }
