@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { webusb } from '../usb/usb.service';
 
 @Component({
   selector: 'devices',
@@ -6,7 +7,13 @@ import { Component, OnInit } from '@angular/core';
   styleUrls: ['./devices.page.scss'],
 })
 export class DevicesPage implements OnInit {
-  constructor() {}
+  constructor() {
+    webusb();
+  }
 
   ngOnInit() {}
+
+  callMethod() {
+    webusb();
+  }
 }
