@@ -28,5 +28,6 @@ export async function webnfc() {
     });
   } catch (error) {
     console.error(error);
+    window.alert(error);
   }
 }
