@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { webusb } from './usb/usb.service';
 import { webnfc } from './nfc/nfc.service';
+import { webusbNew } from './usb/usb.service';
 
 @Component({
   selector: 'devices',
@@ -13,7 +14,7 @@ export class DevicesPage implements OnInit {
   ngOnInit() {}
 
   callMethod() {
-    webusb();
+    webusbNew();
   }
 
   callMethod2() {

@@ -1,12 +1,26 @@
 // use type > https://www.npmjs.com/package/@types/w3c-web-usb
-// TODO: 接続されたデバイスを特定する
+// ISO7816-4/8/9
 
 const DEVICE_FILTER = {};
 const DEVICE_OPTIONS = {
   filters: [DEVICE_FILTER],
 };
 const ACK_PACKET = Uint8Array.of(0x00, 0x00, 0xff, 0x00, 0xff, 0x00);
+let seqNumber = 0;
 
+//@ts-ignore
+function padding_zero(num, p) {
+  return ('0'.repeat(p * 1) + num).slice(-(p * 1));
+}
+//@ts-ignore
+function get_header_length(header) {
+  return (header[4] << 24) | (header[3] << 16) | (header[2] << 8) | header[1];
+}
+
+//@ts-ignore
+function dec2HexString(n) {
+  return padding_zero((n * 1).toString(16).toUpperCase(), 2);
+}
 // @ts-ignore
 async function sleep(msec) {
   return new Promise((resolve) => setTimeout(resolve, msec));
@@ -32,6 +46,28 @@ async function receive(device, len) {
   return arr;
 }
 
+//@ts-ignore
+async function sendCommand2(device, data) {
+  let argData = new Uint8Array(data);
+  const dataLen = argData.length;
+  const SLOTNUMBER = 0x00;
+  let retVal = new Uint8Array(10 + dataLen);
+
+  retVal[0] = 0x6b; // ヘッダー作成
+  retVal[1] = 255 & dataLen; // length をリトルエンディアン
+  retVal[2] = (dataLen >> 8) & 255;
+  retVal[3] = (dataLen >> 16) & 255;
+  retVal[4] = (dataLen >> 24) & 255;
+  retVal[5] = SLOTNUMBER; // タイムスロット番号
+  retVal[6] = ++seqNumber; // 認識番号
+
+  0 != dataLen && retVal.set(argData, 10); // コマンド追加
+  console.log('>>>>>>>>>>');
+  console.log(Array.from(retVal).map((v) => v.toString(16)));
+  await device.transferOut(2, retVal);
+  await sleep(50);
+}
+
 // @ts-ignore
 async function sendCommand(device, cmd, params) {
   let command = [0x00, 0x00, 0xff, 0xff, 0xff]; // packet header
@@ -49,6 +85,112 @@ async function sendCommand(device, cmd, params) {
   await receive(device, 6); // カードからは必ずACKから帰るのでそれをまず受ける
   const result = await receive(device, 290); // max length?
   return result;
+}
+
+export async function webusbNew() {
+  console.log('webusb()');
+  // @ts-ignore
+  // w3c-web-usbを使用するのが本式
+  const device = await navigator?.usb.requestDevice(DEVICE_OPTIONS);
+  console.log(device);
+  // @ts-ignore
+  // window.alert('connected: ' + device.productName); // Pasori RC-S300/S
+  // window.alert('venderId: ' + device.vendorId); // 1356
+  // window.alert('productId: ' + device.productId); // 3528
+  await device.open();
+  // only Pasori RC-S300/S
+  await device.selectConfiguration(1);
+  await device.claimInterface(1);
+  let rcs300_com_length = 0;
+  let header = [];
+  // endtransparent
+  await sendCommand2(device, [0xff, 0x50, 0x00, 0x00, 0x02, 0x82, 0x00, 0x00]);
+  // ['83', '07', '00', '00', '00', '00', '01', '02', '00', '00']
+  header = await receive(device, 10);
+  // ['C0', '03', '00', '90', '00', '90', '00']
+  await receive(device, get_header_length(header));
+  // startransparent
+
+  await sendCommand2(device, [0xff, 0x50, 0x00, 0x00, 0x02, 0x81, 0x00, 0x00]);
+  // ['83', '07', '00', '00', '00', '00', '01', '02', '00', '00']
+  header = await receive(device, 10);
+  // ['C0', '03', '00', '90', '00', '90', '00']
+  await receive(device, get_header_length(header));
+
+  // rf off
+  await sendCommand2(device, [0xff, 0x50, 0x00, 0x00, 0x02, 0x83, 0x00, 0x00]);
+  // ['83', '07', '00', '00', '00', '00', '01', '02', '00', '00']
+  header = await receive(device, 10);
+  // ['C0', '03', '00', '90', '00', '90', '00']
+  await receive(device, get_header_length(header));
+
+  // rf on
+  await sendCommand2(device, [0xff, 0x50, 0x00, 0x00, 0x02, 0x84, 0x00, 0x00]);
+  // ['83', '07', '00', '00', '00', '00', '01', '02', '00', '00']
+  header = await receive(device, 10);
+  // ['C0', '03', '00', '90', '00', '90', '00']
+  await receive(device, get_header_length(header));
+
+  // SwitchProtocolTypeF
+  await sendCommand2(
+    device,
+    [0xff, 0x50, 0x00, 0x02, 0x04, 0x8f, 0x02, 0x03, 0x00, 0x00]
+  );
+  header = await receive(device, 10);
+  // ['C0', '03', '00', '90', '00', '90', '00']
+  await receive(device, get_header_length(header));
+
+  // ferica poling
+  await sendCommand2(
+    device,
+    [
+      0xff, 0x50, 0x00, 0x01, 0x00, 0x00, 0x11, 0x5f, 0x46, 0x04, 0xa0, 0x86,
+      0x01, 0x00, 0x95, 0x82, 0x00, 0x06, 0x06, 0x00, 0xff, 0xff, 0x01, 0x00,
+      0x00, 0x00, 0x00,
+    ]
+  );
+  // poling検出時 *がIDm
+  // ['83', '24', '00', '00', '00', '00', '06', '02', '00', '00']
+  // ['C0', '03', '00', '90', '00', '92', '01', '00', '96', '02', '00', '00', '97', '14', '14', '01', '**', '**', '**', '**', '**', '**', '**', '**', '05', '31', '43', '45', '46', '82', 'B7', 'FF', '00', '03', '90', '00']
+  // poling未検出時
+  // ['83', '07', '00', '00', '00', '00', '98', '02', '00', '00']
+  // ['C0', '03', '02', '64', '01', '90', '00']
+  header = await receive(device, 10);
+  const poling_res_f = await receive(device, get_header_length(header));
+  if (poling_res_f.length == 36) {
+    const idm = poling_res_f.slice(16, 24).map((v) => dec2HexString(v));
+    const idmStr = idm.join(' ');
+    console.log('Card Type: Felica  カードのIDm: ' + idmStr);
+
+    return;
+  }
+  // SwitchProtocolTypeA
+  await sendCommand2(
+    device,
+    [0xff, 0x50, 0x00, 0x02, 0x04, 0x8f, 0x02, 0x00, 0x03, 0x00]
+  );
+  header = await receive(device, 10);
+  // ['C0', '03', '00', '90', '00', '90', '00']
+  await receive(device, get_header_length(header));
+
+  // GET Card UID
+  await sendCommand2(device, [0xff, 0xca, 0x00, 0x00]);
+
+  // poling検出時 *がIDm
+  // ['83', '06', '00', '00', '00', '00', '04', '02', '00', '00']
+  // ['**', '**', '**', '**', '90', '00']
+
+  // ['83', '07', '00', '00', '00', '00', '41', '02', '00', '00']
+  // ['C0', '03', '01', '64', '01', '90', '00']
+  // or ['6F', '00']
+  header = await receive(device, 10);
+  const poling_res_a = await receive(device, get_header_length(header));
+  if (poling_res_a.length == 6) {
+    const id = poling_res_a.slice(0, 4).map((v) => dec2HexString(v));
+    const idStr = id.join(' ');
+    console.log('Card Type : MIFARE  カードのID: ' + idStr);
+    return;
+  }
 }
 
 export async function webusb() {
