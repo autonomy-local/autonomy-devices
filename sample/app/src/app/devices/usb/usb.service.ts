@@ -68,8 +68,8 @@ export async function webusb() {
       await device.claimInterface(1);
       await send(device, ACK_PACKET); // カードの活性化と疎通確認
       console.log('send ACK_PACKET');
-      await sendCommand(device, 0x2a, [0x01]); // GetProperty
-      console.log('send GetProperty');
+      await sendCommand(device, 0x2a, [0x01]); // SetCommandType
+      console.log('send SetCommandType');
       await sendCommand(device, 0x06, [0x00]); // SwitchRF
       console.log('send SwitchRF');
       // ↑ここまででカードの活性化と疎通確認ができる(共通処理)
@@ -86,6 +86,7 @@ export async function webusb() {
           0x00, 0x12, 0x00, 0x13, 0x06,
         ]
       ); // InSetProtocol
+      // >> OK
       console.log('send InSetProtocol');
       await sendCommand(device, 0x02, [0x00, 0x18]); // InSetProtocol
       console.log('send InSetProtocol');
